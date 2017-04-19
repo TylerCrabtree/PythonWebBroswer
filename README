@@ -1,0 +1,16 @@
+Names: Angatvir Sanghera, Tyler Crabtree, Tyler Coy
+Emails: Angatvir.Sanghera@wsu.edu, Crabtree.tyler@gmail.com, Tyler.Coy@wsu.edu.
+
+
+Install commands (Linux):
+1. brew install python3
+2. sudo pip3 install flask
+3. sudo pip3 install mtranslate 
+4. sudo pip3 install whoosh
+
+To run:
+1. Inside 'Final' folder, type 'python3 indexer.py' (this will create the index which I have already included simply overwrite and type no when it asks to declare a schema).
+2. Follow commands of this program to initialize databases
+3. When command 2 is done, type "python3 searchEngine.py"
+4. Open a browser and type 'localhost:5000'
+5. The browser should be displayed. 

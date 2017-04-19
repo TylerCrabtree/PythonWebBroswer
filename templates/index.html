@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href= "{{ url_for('static',filename='styles/style.css') }}">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+  <script type=text/javascript>
+  var dict = [];//store previous
+  var count = 0;//how many in previous
+  var flagMe = 0;//set flags for previous
+  $(function x() {//when select is pressed then remove the rows and make total empty
+  $('select').change( function() {
+      $("#table tr").remove();
+      $('#Total').html(""); 
+    })
+  $('a#search').bind('click', function() {//when search is clicked take in the three inputs
+    $.getJSON('/_search', {
+      a: $('input[name="a"]').val(),
+      b: $('select[name="b"]').val(),
+      c: $('input[name="c"]').val(),
+    }, function(data) {
+    if(data.result != 'none'){//if not empty then go in
+    var tableData = '<table class="table-fill">'//start table
+    var rows = 0;//store rows
+    var cols = 0;//store columns
+    var z = data.results;//actual count
+    var x = data.resultss;//limit count
+    var flag = 0;
+    if(x == z)//if equal then set flag to 1
+    {
+      flag = 1;
+    }
+    if(x > z)//if limit is greater then the actual count then set flag to 2
+    {
+      flag = 2;
+    }
+    tableData += '<tr>';//start row
+    $.each(data.result, function(key, value){//make the keys as the headers
+      cols++;
+      rows = data.result[key].length;
+      tableData += '<th class="text-left">' + key + '</th>'; 
+    });
+    tableData += '</tr>';//close the row
+      var data = Object.values(data.result);//convert to a Javascript Array 
+      for (var i=0; i < rows; i++) {//go throw rows and columns and another array to rotate
+       tableData += '<tr>';//open row again
+       for (var j=0; j < cols; j++) {
+        for (var k=0; k < cols; k++) {
+            if(data[j][i].includes("/wiki/"))//if wiki then a link put in td
+            {
+              tableData += '<td class="text-left"><a href="' + data[j][i] + '">Open here</a></td>';
+            }//else then a photo put in td
+            else if(data[j][i].endsWith(".jpg") || data[j][i].endsWith(".JPG") || data[j][i].endsWith(".png") || data[j][i].endsWith(".PNG") || data[j][i].endsWith(".jpeg")) 
+            {
+              var img = '<img src="' + data[j][i] + '">';
+              tableData += '<td>' + img + '</td>';
+            }
+            else//regular content make every element clickable
+            {
+              var parts = data[j][i].split(' ');
+              tableData += '<td class="text-left">';//add everything below to a td
+              tableData += '<div class="overflow">';
+              for(x=0; x<parts.length; x++)//go through each word and call function 
+              {
+                var p = parts[x];
+                var n = p.indexOf('|');
+                p = p.substring(0, n != -1 ? n : p.length);
+                tableData += '<a href="javascript:void(0)" onclick="clickedPart(this)"; return false;> ' + p + ' ' + '</a>';
+              }
+              tableData += '</div>';
+              tableData += '</td>';  
+            }
+            break;
+          }
+        }
+        tableData += '</tr>';//close the row
+
+      }          
+      tableData += '</table>';//close table
+      var previous = document.getElementById("a").value;//grab data in search
+      var previousDatabase = document.getElementById("b").value;//grab database
+      var previousSearchTotal = document.getElementById("c").value;//grab limit
+      $('#table').html(tableData);//update table
+      if(flag == 0){//according to the flags update the total results 
+        $('#Total').html("Total Results:" + z);
+      }
+      else if(flag == 2){
+        $('#Total').html("Total Results:" + z);
+      }
+      else{
+        $('#Total').html("");
+      }
+      if(flagMe != 1){//if flag is not set then push elements through and increment
+        count = dict.length;
+        dict.push({
+          key:   previous,
+          value: previousDatabase,
+          total: previousSearchTotal
+        });
+        count++;
+        flagMe = 0;//reset to 0
+      }
+    }
+    else{//no results clear everything
+      var tableData = '<table>'
+      tableData += '</table>';
+      $('#table').html(tableData);
+      $('#Total').html("Total Results:0");
+    }
+    });
+    return false;
+  });
+  $('a#clear').bind('click', function() {//clear everything
+    $("#table tr").remove(); 
+    $('#Total').html("");
+    var b = "";
+    document.getElementById("a").value = b;
+    document.getElementById("c").value = b;
+  });
+  $('a#previous').bind('click', function() {//go back one
+    if(count != 0)//if previous not at 0 then dec
+    {
+      count--;
+    }
+    document.getElementById("a").value = dict[count].key;//grab previous search
+    document.getElementById("b").value = dict[count].value;//grab database
+    document.getElementById("c").value = dict[count].total;//grab limit
+    document.getElementById('search').click();//call search
+  $('html, body').animate({ scrollTop: 0 }, 'medium');
+    });
+  });
+  function clickedPart(part){//clicked then run replace on certain regex then update elements
+    var previous = document.getElementById("a").value;//grab search
+    var previousDatabase = document.getElementById("b").value;//grab database
+    var previousSearchTotal = document.getElementById("c").value;//grab limit
+    dict.push({//push all three
+      key:   previous,
+      value: previousDatabase,
+      total: previousSearchTotal
+    });
+    count = dict.length;//get new length
+    var x = part.innerHTML.replace(/["(){}.:,]/g,"");//remove regex
+    x = x.replace(/[\[\]]+/g,"");//remove regex
+    var b = "";//grab values
+    document.getElementById("a").value = x;
+    document.getElementById("c").value = b;
+    flagMe = 1;
+    document.getElementById('search').click();//run search
+    $('html, body').animate({ scrollTop: 0 }, 'medium');//scroll up
+    part.preventDefault();
+  }
+</script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h3 class="text-muted">Search</h3><!--title-->
+    </div>
+    <hr/>
+    <div>
+      <p>
+        <input type="text" size="10" name="a" id="a" placeholder="Search"><!--input box-->
+        <select name="b" id="b"><!--option value-->
+          <option value="dinosaur.db">Dinosaurs</option>
+          <option value="mmorpg.db">Mmorpgs</option>
+          <option value="superfamicom.db">Superfamicom Games</option>
+        </select>
+        <input type="text" size="10" name="c" id="c" placeholder="Limit">
+        <a href="javascript:void(0);" class="button" id="search" >Search</a><!--buttons-->
+        <a href="javascript:void(0);" class="button" id="previous">Previous</a>
+        <a href="javascript:void(0);" class="button" id="clear">Clear</a>
+        <br> 
+        <span id="Total"></span><!--Total values go-->
+        <table id="table"></table><!--Table goes-->
+      </form>
+    </div>
+  </div>
+</body>
+</html>
